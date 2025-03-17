@@ -1,0 +1,43 @@
+import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Function to get historical OHLCV data from Binance
+def get_binance_data(symbol, interval='1h', limit=100):
+    url = f"https://api.binance.com/api/v3/klines"
+    params = {
+        "symbol": symbol.upper(),
+        "interval": interval,
+        "limit": limit
+    }
+    
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    # Convert data into a Pandas DataFrame
+    df = pd.DataFrame(data, columns=[
+        "timestamp", "open", "high", "low", "close", "volume",
+        "close_time", "quote_volume", "trades", "taker_base", "taker_quote", "ignore"
+    ])
+    
+    # Convert timestamp to readable datetime
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+    
+    # Convert columns to numeric values
+    df[["open", "high", "low", "close", "volume"]] = df[["open", "high", "low", "close", "volume"]].astype(float)
+
+    return df
+
+# Fetch historical data for BTC/USDT
+df_btc = get_binance_data("BTCUSDT", interval="1h", limit=200)
+
+# Plot Closing Price
+plt.figure(figsize=(10, 5))
+plt.plot(df_btc["timestamp"], df_btc["close"], label="BTC/USDT Price", color="orange")
+plt.xlabel("Time")
+plt.ylabel("Price (USDT)")
+plt.title("BTC/USDT Price Movement")
+plt.legend()
+plt.xticks(rotation=45)
+plt.grid()
+plt.show()
